@@ -7,25 +7,21 @@ import mill.scalalib.{PublishModule, ScalaModule}
 import mill.scalalib.publish.{Developer, License, PomSettings, VersionControl}
 
 object VersionOf {
-  val `better-monadic-for` = "0.3.1"
-  val cats                 = "2.3.1"
-  val monix                = "3.3.0"
-  val scalacheck           = "1.15.2"
-  val scalatest            = "3.2.5"
-  val shapeless            = "2.3.3"
+  val `cats-core`   = "2.6.1"
+  val `cats-effect` = "2.5.1"
+  val monix         = "3.4.0"
+  val scalacheck    = "1.15.4"
+  val scalatest     = "3.2.10"
+  val shapeless     = "2.3.3"
 }
 
 /** Common properties for all Scala modules. */
 trait SubModule extends ScalaModule {
-  override def scalaVersion = "2.13.4"
+  override def scalaVersion = "3.0.2"
 
   override def ivyDeps = Agg(
-    ivy"org.typelevel::cats-core:${VersionOf.cats}",
-    ivy"org.typelevel::cats-effect:${VersionOf.cats}"
-  )
-
-  override def scalacPluginIvyDeps = Agg(
-    ivy"com.olegpy::better-monadic-for:${VersionOf.`better-monadic-for`}"
+    ivy"org.typelevel::cats-core:${VersionOf.`cats-core`}",
+    ivy"org.typelevel::cats-effect:${VersionOf.`cats-effect`}"
   )
 
   override def repositories = super.repositories ++ Seq(
@@ -39,7 +35,7 @@ trait SubModule extends ScalaModule {
     "-encoding",
     "utf-8",
     "-Xfatal-warnings",
-    "-Ywarn-value-discard"
+    "-language:Scala2"
   )
 
   // `extends Tests` uses the context of the module in which it's defined
@@ -77,7 +73,7 @@ trait SubModule extends ScalaModule {
 
 object paxos extends SubModule {
   override def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"com.chuusai::shapeless:${VersionOf.shapeless}",
+    ivy"com.chuusai::shapeless:${VersionOf.shapeless}".withDottyCompat(scalaVersion()),
     ivy"io.monix::monix:${VersionOf.monix}"
   )
   object specs extends SpecsModule
