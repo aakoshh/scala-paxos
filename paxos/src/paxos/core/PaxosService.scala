@@ -14,7 +14,10 @@ class PaxosService[F[_]: Concurrent: Tap, P <: Paxos](
     requestQueue: ConcurrentQueue[F, ClientRequest[P]],
     instancesRef: Ref[F, Map[InstanceId, PaxosInstance[P]]],
     resultsRef: Ref[F, Map[InstanceId, Deferred[F, P#Value]]]
-)(implicit ev1: Ordering[P#Pid], ev2: Zero[P#Pid]) {
+)(implicit ev1: Ordering[P#Pid], ev2: Zero[P#Pid])
+    extends PaxosInstance.Ops[P] {
+
+  override implicit val pidOrd = ev1
 
   def clientRequest(
       req: ClientRequest[P]
@@ -39,8 +42,11 @@ class PaxosService[F[_]: Concurrent: Tap, P <: Paxos](
       req: ClientRequest[P]
   ): F[Unit] =
     getInstance(req.instanceId, req.members) >>= { inst =>
-      inst.doPrepare(req.value) match {
-        case (next, effects, ()) =>
+      doPrepare(req.value).run(inst) match {
+        case Left(err) =>
+          Tap[F](s"error handling request $req: $err")
+
+        case Right((next, effects, ())) =>
           updateAndExecute(next, effects)
       }
     }
@@ -49,7 +55,7 @@ class PaxosService[F[_]: Concurrent: Tap, P <: Paxos](
       msg: PaxosMessage[P]
   ): F[Unit] =
     getInstance(msg.instanceId, msg.members) >>= { inst =>
-      inst.handleMessage(msg) match {
+      doHandleMessage(msg).run(inst) match {
         case Left(err) =>
           Tap[F](s"error handling message $msg: $err")
 
@@ -78,19 +84,17 @@ class PaxosService[F[_]: Concurrent: Tap, P <: Paxos](
       effect: Effect[P]
   ): F[Unit] = effect match {
     case Effect.Broadcast(msg) =>
-      msg.members.toList.traverse { pid =>
-        writer(pid) flatMap {
-          case Some(chan) => chan.send(msg)
-          case None       => Tap[F](s"unable to locate channel for dest $pid")
-        }
-      }.void
+      msg.members.toList.traverse(send(_, msg)).void
 
     case Effect.Unicast(pid, msg) =>
-      writer(pid) flatMap {
-        case Some(chan) => chan.send(msg)
-        case None       => Tap[F](s"unable to locate channel for dest $pid")
-      }
+      send(pid, msg)
   }
+
+  private def send(pid: P#Pid, msg: PaxosMessage[P]) =
+    writer(pid) flatMap {
+      case Some(chan) => chan.send(msg)
+      case None       => Tap[F](s"unable to locate channel for dest $pid")
+    }
 
   private def getResult(id: InstanceId) =
     for {
