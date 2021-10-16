@@ -7,8 +7,8 @@ import cats.effect.concurrent.{Ref, Deferred}
 import monix.catnap.ConcurrentQueue
 import scala.math.Ordering.Implicits._
 
-trait PaxosServiceModule[P <: Paxos] {
-  self: PaxosModule[P] with PaxosModels[P] with PaxosInstanceModule[P] =>
+trait PaxosServiceModule[P <: Paxos & Singleton] extends PaxosModule[P] {
+  self: PaxosModels[P] with PaxosInstanceModule[P] =>
 
   class PaxosService[F[_]: Concurrent: Tap](
       myPid: p.Pid,

@@ -34,8 +34,7 @@ trait SubModule extends ScalaModule {
     "-feature",
     "-encoding",
     "utf-8",
-    "-Xfatal-warnings",
-    "-language:Scala2"
+    "-Xfatal-warnings"
   )
 
   // `extends Tests` uses the context of the module in which it's defined

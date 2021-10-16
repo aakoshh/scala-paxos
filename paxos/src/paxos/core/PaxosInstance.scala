@@ -5,7 +5,7 @@ import cats.implicits._
 import scala.math.Ordering.Implicits._
 import scala.annotation.tailrec
 
-trait PaxosInstanceModule[P <: Paxos] { self: PaxosModule[P] with PaxosModels[P] =>
+trait PaxosInstanceModule[P <: Paxos & Singleton] extends PaxosModule[P] { self: PaxosModels[P] =>
 
   sealed trait Effect
 

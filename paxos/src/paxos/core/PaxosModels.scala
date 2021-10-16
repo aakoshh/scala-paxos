@@ -1,7 +1,6 @@
 package paxos.core
 
-trait PaxosModels[P <: Paxos] { self: PaxosModule[P] =>
-
+trait PaxosModels[P <: Paxos & Singleton] extends PaxosModule[P] {
   case class ClientRequest(
       instanceId: InstanceId,
       members: Set[p.Pid],
