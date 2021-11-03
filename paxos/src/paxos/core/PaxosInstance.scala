@@ -276,8 +276,8 @@ object PaxosInstance {
                 case _ =>
                   unit
               }
-              _ <- doAddPromise(msg.src)
-              _ <- maybeSendPropose
+              reachedQuorum <- doAddPromise(msg.src)
+              _ <- maybeSendPropose.whenA(reachedQuorum)
             } yield nodec
         }
       } yield maybeDecision
